@@ -1,0 +1,107 @@
+Read AERMET surface file 1st line, using  read.fwf or read.fortran (calls read.fwf) 
+
+ametfile <- '724828_Edited.SFC'
+amet.rt  <- inp_amet.rt( ametfile, -8, raw=TRUE)   # takes under 1 sec.
+amet.fwf <- inp_amet.fwf(ametfile, -8, raw=TRUE)   # takes 18 sec.
+
+I had expected fixed format read to be faster, but it was much slower!
+
+============================================================
+# read.fortran: specifying d > 0 in the F or D format will shift the decimal d places to the left, even if it is explicitly specified in the input file
+
+============================================================
+         1         2         3         4         5         6         7         8         9        10
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+   38.367N  121.950W          UA_ID:    23230  SF_ID:    93241  OS_ID:              VERSION: 14134    CCVR_Sub TEMP_Sub
+xxA-------xxA-------x-------LlllllllA-------Llllllll
+FORMAT (2(2X,A8), 8X,' UA_ID: ',A8, ' SF_ID: ',A8, ' OS_ID: ',A8, T85, 'VERSION:', A6 )
+This covers 1st 98 characters
+
+
+C:\_modwork\AERMOD\_src\aermet_source_code_21112
+
+# AERMET surface meteorology file for AERMOD
+#AERMET 21112
+#MPOUT.FOR
+#line 124
+#            WRITE( DEV80,1800 ) MPYR,MPCMO,MPCDY,MPJDY,J,
+#     &           HFLUX(J),
+#     &           USTAR(J),WSTAR(J),VPTG(J),ZICONV(J),ZIMECH(J),MOL(J),
+#     &           Z0(J),BOWEN(J),ALBEDO(J),WSPD(J),WDIR(J),ZREF(J),
+#     &           T(J),ZTREF(J), IPCODE(J), PAMT(J), RH(J),P(J),CCVR(J),  ! dtb #300 03071
+#     &           WSADJ, SUBs
+#
+# 1800       FORMAT( 3(I2,1X), I3,1X, I2,1X, F6.1,1X, F6.3,1X, F6.3,1X,
+#     &           F6.3,1X, 2(F5.0,1X),
+#     &           F8.1,1X, F7.4,1X, F6.2,1X, F6.2,1X, F7.2,1X, F6.1,
+#     &           3(1X,F6.1), 1X,I5, 1X,F6.2, 2(1X, F6.0), 1X, I5,        ! dtb #011 01180
+#     &           1X, A7, 1X, A12)
+#
+# The F7.2,1X, F6.1 is for wd and ws; user guide has F5.0 for ws.
+
+
+# FORMAT (2(2X,A8), 8X,' UA_ID: ',A8, ' SF_ID: ',A8, ' OS_ID: ',A8, T85, 'VERSION:', A6 )
+There should be two spaces before each _ID title, and one space after each colon: width 9
+
+C:\_modwork\AERMOD\_src\aermet_source_code_21112\MPMET.FOR
+line 260
+C---- Write header record to SFC file, starting with basic HDR_String;
+C     add WS threshold for 1-min ASOS data, and other options if used.
+C     First build string for standard information
+  800 FORMAT ( 2(2X,A8), 8X, '  UA_ID: ',A8, '  SF_ID: ',A8,
+     &                       '  OS_ID: ',A8, T85, 'VERSION:',A6 )
+Various other strings can be added to this.
+
+2X
+A8
+2X
+A8
+8X
+9	 UA_ID: 
+A8
+9	  SF_ID: 
+A8
+9	 OS_ID: 
+A8
+T85 --> skip 5
+8	VERSION:
+A6
+
+widths = c(-2, 8, -2, 8, -8, 9, 8, 9, 8, 9, 8, -5, 8, 6)
+
+
+lat.str
+long.str
+UA.ID.title
+UA.ID
+SF_ID.title
+SF_ID
+OS_ID.title
+OS_ID
+AMET.VER.title
+AMET.VER
+
+col.names = c("lat.str", "long.str", "UA.ID.title", "UA.ID", "SF_ID.title", "SF_ID", "OS_ID.title", "OS_ID", "AMET.VER.title", "AMET.VER")
+
+read.fwf(ametfile, n=1,
+	widths = c(-2, 8, -2, 8, -8, 9, 8, 9, 8, 9, 8, -5, 8, 6),
+	col.names = c("lat.str", "long.str", "UA.ID.title", "UA.ID", "SF_ID.title", "SF_ID", "OS_ID.title", "OS_ID", "AMET.VER.title", "AMET.VER")
+)
+
+lhead <- ahead[1,]
+
+
+> sub(' *([A-Za-z_]+): *', "\\1", '  UA_ID: ', perl=T)
+[1] " \001"
+
+> sub('a', 'X', c('cabala', 'bcd', 'bad'), fixed=TRUE)
+[1] "cXbala" "bcd"    "bXd"   
+> gsub('a', 'X', c('cabala', 'bcd', 'bad'), fixed=TRUE)
+[1] "cXbXlX" "bcd"    "bXd"   
+
+
+ widths = c(
+   rep(c(2, -1), 3), 3, -1, 2, -1, 
+   6, -1, 6, -1, 6, -1, 6, -1, 5, -1,
+   5, -1, 8, -1, 7, -1, 6, -1, 6, -1, 
+   7, -1, 6),

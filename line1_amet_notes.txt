@@ -1,0 +1,12 @@
+> a1 <- line1_amet("724828_short_neg.SFC")
+Warning message:
+In longlatnum(ahead[["long.str"]]) :
+  latitude or longitude string '-121.950' did not end in E,W,S,N, or digit
+> regexpr("[EWSN\\d.]", "-120")
+[1] -1
+attr(,"match.length")
+[1] -1
+attr(,"index.type")
+[1] "chars"
+attr(,"useBytes")
+[1] TRUE
